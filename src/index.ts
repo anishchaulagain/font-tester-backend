@@ -1,12 +1,28 @@
 import express from "express";
+import "reflect-metadata";
+import { AppDataSource } from "./data-source";
+import fontRoutes from "./routes/font.routes";
+import authRoutes from "./routes/auth.routes";
+import { seedAdmin } from "./seeds/adminSeed";
+import * as dotenv from "dotenv";
+import cors from 'cors';
+dotenv.config();
 
 const app = express();
-const PORT = 3000;
 
-app.get("/", (_req, res) => {
-  res.send("🚀 Server is running!");
-});
+app.use(cors({
+  origin: 'http://localhost:5173', // Allow frontend origin
+  credentials: true, 
+}));
+app.use(express.json());
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server listening on http://localhost:${PORT}`);
+const PORT = process.env.PORT || 4000;
+
+AppDataSource.initialize().then(async () => {
+  await seedAdmin();
+
+  app.use("/v1/fonts", fontRoutes);
+  app.use("/v1/auth", authRoutes);
+
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 });
